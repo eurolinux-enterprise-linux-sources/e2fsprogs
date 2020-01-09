@@ -4,7 +4,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.41.12
-Release: 18%{?dist}.1
+Release: 21%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -62,6 +62,11 @@ Patch41: e2fsprogs-1.42.8-resize2fs-flex-beyond-end.patch
 Patch42: e2fsprogs-1.41.12-e2fsck-blocks-past-eof.patch
 Patch43: e2fsprogs-1.41.12-resize2fs-fix-parents.patch 
 Patch44: e2fsprogs-1.41.12-resize-fixes.patch
+Patch45: e2fsprogs-1.41.12-tune2fs-remove-dirty-journal.patch
+Patch46: e2fsprogs-1.41.12-e2fsck-conf-periodic-check.patch
+Patch47: e2fsprogs-1.41.12-mke2fs-rev-check.patch
+Patch48: e2fsprogs-1.41.12-e2image-mounted.patch
+Patch49: e2fsprogs-1.41.14-rec_len-encoding.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -261,6 +266,11 @@ It was originally inspired by the Multics SubSystem library.
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
+%patch45 -p1
+%patch46 -p1
+%patch47 -p1
+%patch48 -p1
+%patch49 -p1
 
 # Copy images needed for i_e2image in place
 cp -f %{SOURCE2} %{SOURCE3} %{SOURCE4} ./tests/i_e2image
@@ -431,8 +441,17 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
-* Wed Jul 16 2014 Eric Sandeen <sandeen@redhat.com> 1.41.12-18.1
-- Fix for some resize2fs corruptions (#1120084)
+* Fri Jun 27 2014 Eric Sandeen <sandeen@redhat.com> 1.41.12-21
+- Fix previously undetected directory corruption in e2fsck (#1112242)
+
+* Tue May 13 2014 Eric Sandeen <sandeen@redhat.com> 1.41.12-20
+- Disallow e2image on rw-mounted fs w/o force flag (#1097061)
+
+* Mon Apr 18 2014 Eric Sandeen <sandeen@redhat.com> 1.41.12-19
+- Fix for some resize2fs corruptions (#1036122)
+- Allow tune2fs to remove a dirty journal with -ff (#1040122)
+- Add enable_periodic_fsck to mke2fs.conf (#1052409)
+- Disallow too-high revision during mke2fs (#1093446)
 
 * Mon Aug 12 2013 Eric Sandeen <sandeen@redhat.com> 1.41.12-18
 - Fix e2fsck false positive when blocks exist past EOF (#994615)
