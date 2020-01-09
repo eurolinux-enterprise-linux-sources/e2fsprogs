@@ -1,0 +1,64 @@
+From 35da59eaf201d5935d7047657355f129f3791d9a Mon Sep 17 00:00:00 2001
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Date: Sat, 11 Jan 2014 13:54:57 -0500
+Subject: [PATCH 1/2] libext2fs: detect correct superblock adjustments when
+ loading backup groups
+
+If ext2fs_descriptor_block_loc2() is called with a meta_bg filesystem
+and group_block is not the normal value, the function will return the
+location of the backup group descriptor block in the next block group.
+Unfortunately, it fails to account for the possibility that the backup
+group contains a backup superblock but the regular superblock does
+not.  This is the case with block groups 48-49 on a meta_bg fs with 1k
+blocks; in this case, libext2fs will fail to open the filesystem.
+
+Therefore, teach the function to adjust for superblocks in the backup
+group, if necessary.
+
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ lib/ext2fs/openfs.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/lib/ext2fs/openfs.c b/lib/ext2fs/openfs.c
+index 2c6e10e..b27bf19 100644
+--- a/lib/ext2fs/openfs.c
++++ b/lib/ext2fs/openfs.c
+@@ -47,7 +47,7 @@ blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs, blk64_t group_block,
+ 	bg = EXT2_DESC_PER_BLOCK(fs->super) * i;
+ 	if (ext2fs_bg_has_super(fs, bg))
+ 		has_super = 1;
+-	ret_blk = ext2fs_group_first_block2(fs, bg) + has_super;
++	ret_blk = ext2fs_group_first_block2(fs, bg);
+ 	/*
+ 	 * If group_block is not the normal value, we're trying to use
+ 	 * the backup group descriptors and superblock --- so use the
+@@ -57,10 +57,21 @@ blk64_t ext2fs_descriptor_block_loc2(ext2_filsys fs, blk64_t group_block,
+ 	 * have the infrastructure in place to do that.
+ 	 */
+ 	if (group_block != fs->super->s_first_data_block &&
+-	    ((ret_blk + fs->super->s_blocks_per_group) <
+-	     ext2fs_blocks_count(fs->super)))
++	    ((ret_blk + has_super + fs->super->s_blocks_per_group) <
++	     ext2fs_blocks_count(fs->super))) {
+ 		ret_blk += fs->super->s_blocks_per_group;
+-	return ret_blk;
++
++		/*
++		 * If we're going to jump forward a block group, make sure
++		 * that we adjust has_super to account for the next group's
++		 * backup superblock (or lack thereof).
++		 */
++		if (ext2fs_bg_has_super(fs, bg + 1))
++			has_super = 1;
++		else
++			has_super = 0;
++	}
++	return ret_blk + has_super;
+ }
+ 
+ blk_t ext2fs_descriptor_block_loc(ext2_filsys fs, blk_t group_block, dgrp_t i)
+-- 
+2.17.1
+

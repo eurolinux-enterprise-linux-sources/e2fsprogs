@@ -1,0 +1,40 @@
+From 90f0190ac3d2f77a420aaf6ad78b0fb9b93f4698 Mon Sep 17 00:00:00 2001
+From: Eric Sandeen <sandeen@redhat.com>
+Date: Mon, 9 Apr 2018 15:28:12 -0400
+Subject: [PATCH] e2fsck: warn if checkinterval and broken_system_clock both
+ set
+
+If broken_system_clock is set in e2fsck.conf and this causes
+the check interval to be ignored, make that clear to the user:
+
+e2fsck 1.44.1 (24-Mar-2018)
+/dev/sda1: ignoring check interval, broken_system_clock set
+/dev/sda1: clean, 11/65536 files, 12955/262144 blocks
+
+Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+Reviewed-by: Lukas Czerner <lczerner@redhat.com>
+---
+ e2fsck/unix.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index 6f94644..d94d5dc 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -384,7 +384,12 @@ static void check_if_skip(e2fsck_t ctx)
+ 		if (batt && ((ctx->now - fs->super->s_lastcheck) <
+ 			     fs->super->s_checkinterval*2))
+ 			reason = 0;
++	} else if (broken_system_clock && fs->super->s_checkinterval) {
++		log_out(ctx, "%s: ", ctx->device_name);
++		log_out(ctx, "%s",
++			_("ignoring check interval, broken_system_clock set\n"));
+ 	}
++
+ 	if (reason) {
+ 		log_out(ctx, "%s", ctx->device_name);
+ 		log_out(ctx, reason, reason_arg);
+-- 
+2.17.1
+

@@ -1,7 +1,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.42.9
-Release: 12%{?dist}
+Release: 13%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -37,6 +37,9 @@ Patch24: e2fsprogs-1.42.10-Fix-nroff-macro-issue-in-chattr-man-page.patch
 Patch25: e2fsprogs-1.43.6-libext2fs-skip-start_blk-adjustment-when-stride-and-.patch
 Patch26: e2fsprogs-1.43.4-tune2fs-edit-dire-warning-about-check-intervals.patch
 Patch27: e2fsprogs-1.42.11-Fix-32-64-bit-overflow-when-multiplying-by-blocks-cl.patch
+Patch28: e2fsprogs-1.44.1-e2fsck-warn-if-checkinterval-and-broken_system_clock.patch
+Patch29: e2fsprogs-1.42.9-libext2fs-detect-correct-superblock-adjustments-when.patch
+Patch30: e2fsprogs-1.42.9-libext2fs-don-t-always-read-backup-group-descriptors.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -213,6 +216,9 @@ It was originally inspired by the Multics SubSystem library.
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
+%patch28 -p1
+%patch29 -p1
+%patch30 -p1
 
 %build
 %configure --enable-elf-shlibs --enable-nls --disable-uuidd --disable-fsck \
@@ -405,6 +411,10 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Tue Jun 13 2018 Lukas Czerner <lczerner@redhat.com> 1.42.9-13
+- e2fsck: warn if checkinterval and broken_system_clock both set (#1365594)
+- e2fsprogs: fail to open 1k block size ext4 with bigalloc,meta_bg,^resize_inode (#1448019)
+
 * Tue Mar 23 2018 Lukas Czerner <lczerner@redhat.com> 1.42.9-12
 - Fix 32/64-bit overflow when multiplying by blocks/clusters per group (#1553004)
 
