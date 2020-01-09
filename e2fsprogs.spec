@@ -4,7 +4,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.41.12
-Release: 21%{?dist}
+Release: 22%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -67,6 +67,8 @@ Patch46: e2fsprogs-1.41.12-e2fsck-conf-periodic-check.patch
 Patch47: e2fsprogs-1.41.12-mke2fs-rev-check.patch
 Patch48: e2fsprogs-1.41.12-e2image-mounted.patch
 Patch49: e2fsprogs-1.41.14-rec_len-encoding.patch
+Patch50: e2fsprogs-1.42.11-time-preen.patch
+Patch51: e2fsprogs-1.42.13-time-fudged-ignore.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -271,6 +273,8 @@ It was originally inspired by the Multics SubSystem library.
 %patch47 -p1
 %patch48 -p1
 %patch49 -p1
+%patch50 -p1
+%patch51 -p1
 
 # Copy images needed for i_e2image in place
 cp -f %{SOURCE2} %{SOURCE3} %{SOURCE4} ./tests/i_e2image
@@ -441,6 +445,10 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Thu Jun 04 2015 Eric Sandeen <sandeen@redhat.com> 1.41.12-22
+- e2fsck: fix last mount time and last write time in preen mode (#1218262)
+- e2fsck: don't prompt for time fixes with accept_time_fudge (#1218262)
+
 * Fri Jun 27 2014 Eric Sandeen <sandeen@redhat.com> 1.41.12-21
 - Fix previously undetected directory corruption in e2fsck (#1112242)
 
