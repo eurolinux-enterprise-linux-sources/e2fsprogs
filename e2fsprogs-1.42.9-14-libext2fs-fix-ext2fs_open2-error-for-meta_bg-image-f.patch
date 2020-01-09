@@ -1,0 +1,44 @@
+From fc9ed72f64b0e6689eaed1faa33e3a333b995bf7 Mon Sep 17 00:00:00 2001
+From: Kazuya Mio <k-mio@sx.jp.nec.com>
+Date: Sat, 17 Mar 2018 14:56:15 -0400
+Subject: [PATCH 05/16] libext2fs: fix ext2fs_open2() error for meta_bg image
+ file
+
+commit 8b061a641dff1a0becf645f8e6002de79b997b95
+
+dumpe2fs/debugfs can examine the image file by using the -i option.
+However, if meta_bg feature is enabled, dumpe2fs/debugfs cannot open
+the image file.
+
+$ dumpe2fs -i test.img
+dumpe2fs: Attempt to read block from filesystem resulted in short read while trying to open test.img
+Couldn't find valid filesystem superblock.
+
+In case of specifying an image file, the location of block group descriptors
+is the same as the case of default filesystem regardless of meta_bg feature.
+So if EXT2_FLAG_IMAGE_FILE flag is set in ext2fs_open2(),
+don't use the meta_bg handling.
+
+Signed-off-by: Kazuya Mio <k-mio@sx.jp.nec.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ lib/ext2fs/openfs.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/lib/ext2fs/openfs.c b/lib/ext2fs/openfs.c
+index ba501e6a..200f7815 100644
+--- a/lib/ext2fs/openfs.c
++++ b/lib/ext2fs/openfs.c
+@@ -378,7 +378,8 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
+ #ifdef WORDS_BIGENDIAN
+ 	groups_per_block = EXT2_DESC_PER_BLOCK(fs->super);
+ #endif
+-	if (fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) {
++	if ((fs->super->s_feature_incompat & EXT2_FEATURE_INCOMPAT_META_BG) &&
++	    !(flags & EXT2_FLAG_IMAGE_FILE)) {
+ 		first_meta_bg = fs->super->s_first_meta_bg;
+ 		if (first_meta_bg > fs->desc_blocks)
+ 			first_meta_bg = fs->desc_blocks;
+-- 
+2.20.1
+

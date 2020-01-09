@@ -1,0 +1,44 @@
+From f7da56758e5d15416339d640f79d6eee875d22a9 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Tue, 25 Oct 2016 14:08:59 -0400
+Subject: [PATCH 09/16] mke2fs: Avoid crashes / infinite loops for absurdly
+ large devices
+
+commit 101ef2e93c253ae62320628e8958067d2d2a4e2a
+
+When a device reports absurdly high size, some arithmetics in mke2fs can
+overflow (e.g. number of block descriptors) and we end in an infinite
+loop. Fix that by checking and refusing insanely large devices.
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ misc/mke2fs.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/misc/mke2fs.c b/misc/mke2fs.c
+index 2787a127..7cea0330 100644
+--- a/misc/mke2fs.c
++++ b/misc/mke2fs.c
+@@ -1858,6 +1858,18 @@ profile_error:
+ 			EXT2_BLOCK_SIZE(&fs_param));
+ 		exit(1);
+ 	}
++	/*
++	 * Guard against group descriptor count overflowing... Mostly to avoid
++	 * strange results for absurdly large devices.
++	 */
++	if (fs_blocks_count > ((1ULL << (fs_param.s_log_block_size + 3 + 32)) - 1)) {
++		fprintf(stderr, _("%s: Size of device (0x%llx blocks) %s "
++				  "too big to create\n\t"
++				  "a filesystem using a blocksize of %d.\n"),
++			program_name, fs_blocks_count, device_name,
++			EXT2_BLOCK_SIZE(&fs_param));
++		exit(1);
++	}
+ 
+ 	ext2fs_blocks_count_set(&fs_param, fs_blocks_count);
+ 
+-- 
+2.20.1
+

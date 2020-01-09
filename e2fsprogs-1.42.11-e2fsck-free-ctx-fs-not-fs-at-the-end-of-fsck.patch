@@ -1,0 +1,33 @@
+From a82d88ea99d3c5c21bf538b886da0482bf143fd5 Mon Sep 17 00:00:00 2001
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Date: Thu, 24 Jul 2014 21:03:54 -0400
+Subject: [PATCH] e2fsck: free ctx->fs, not fs, at the end of fsck
+
+When we call ext2fs_close_free at the end of main(), we need to supply
+the address of ctx->fs, because the subsequent e2fsck_free_context
+call will try to access ctx->fs (which is now set to a freed block) to
+see if it should free the directory block list.  This is clearly not
+desirable, so fix the problem.
+
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ e2fsck/unix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index 8d1bdf3e..fc05bdee 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -1774,7 +1774,7 @@ no_journal:
+ 	io_channel_flush(ctx->fs->io);
+ 	print_resource_track(ctx, NULL, &ctx->global_rtrack, ctx->fs->io);
+ 
+-	ext2fs_close_free(&fs);
++	ext2fs_close_free(&ctx->fs);
+ 	free(ctx->journal_name);
+ 
+ 	e2fsck_free_context(ctx);
+-- 
+2.20.1
+

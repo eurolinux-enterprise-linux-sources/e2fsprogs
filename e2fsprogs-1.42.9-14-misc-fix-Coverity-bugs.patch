@@ -1,0 +1,100 @@
+From df9c49cb287a9cd79ee2589ddfa3db0bc1a9d97b Mon Sep 17 00:00:00 2001
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Date: Sat, 16 May 2015 18:32:33 -0400
+Subject: [PATCH 12/16] misc: fix Coverity bugs
+
+commit 63cd76d6ac3bb7f90c583f240fc75e657610f2ea
+
+Fix Coverity bugs 1297093, 1297096, 1297489, 1297491, 1297493,
+1297506, 1297507, 1297514, 1297516, and 1297517.
+
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ debugfs/util.c    | 2 +-
+ lib/e2p/feature.c | 4 ++--
+ lib/e2p/mntopts.c | 2 +-
+ misc/e4defrag.c   | 4 +++-
+ misc/logsave.c    | 2 +-
+ 5 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/debugfs/util.c b/debugfs/util.c
+index aafbc567..b355e5cd 100644
+--- a/debugfs/util.c
++++ b/debugfs/util.c
+@@ -373,7 +373,7 @@ int common_block_args_process(int argc, char *argv[],
+ 		return 1;
+ 	if (*block == 0) {
+ 		com_err(argv[0], 0, "Invalid block number 0");
+-		err = 1;
++		return 1;
+ 	}
+ 
+ 	if (argc > 2) {
+diff --git a/lib/e2p/feature.c b/lib/e2p/feature.c
+index 96912638..d4f1bf1a 100644
+--- a/lib/e2p/feature.c
++++ b/lib/e2p/feature.c
+@@ -177,7 +177,7 @@ int e2p_string2feature(char *string, int *compat_type, unsigned int *mask)
+ 	if (string[9] == 0)
+ 		return 1;
+ 	num = strtol(string+9, &eptr, 10);
+-	if (num > 32 || num < 0)
++	if (num > 31 || num < 0)
+ 		return 1;
+ 	if (*eptr)
+ 		return 1;
+@@ -251,7 +251,7 @@ int e2p_jrnl_string2feature(char *string, int *compat_type, unsigned int *mask)
+ 	if (string[9] == 0)
+ 		return 1;
+ 	num = strtol(string+9, &eptr, 10);
+-	if (num > 32 || num < 0)
++	if (num > 31 || num < 0)
+ 		return 1;
+ 	if (*eptr)
+ 		return 1;
+diff --git a/lib/e2p/mntopts.c b/lib/e2p/mntopts.c
+index d56cc527..ff2e5de9 100644
+--- a/lib/e2p/mntopts.c
++++ b/lib/e2p/mntopts.c
+@@ -72,7 +72,7 @@ int e2p_string2mntopt(char *string, unsigned int *mask)
+ 	if (string[8] == 0)
+ 		return 1;
+ 	num = strtol(string+8, &eptr, 10);
+-	if (num > 32 || num < 0)
++	if (num > 31 || num < 0)
+ 		return 1;
+ 	if (*eptr)
+ 		return 1;
+diff --git a/misc/e4defrag.c b/misc/e4defrag.c
+index 2c2034cf..99baeb7b 100644
+--- a/misc/e4defrag.c
++++ b/misc/e4defrag.c
+@@ -440,8 +440,10 @@ static int page_in_core(int fd, struct move_extent defrag_data,
+ 	*page_num = 0;
+ 	*page_num = (length + pagesize - 1) / pagesize;
+ 	*vec = (unsigned char *)calloc(*page_num, 1);
+-	if (*vec == NULL)
++	if (*vec == NULL) {
++		munmap(page, length);
+ 		return -1;
++	}
+ 
+ 	/* Get information on whether pages are in core */
+ 	if (mincore(page, (size_t)length, *vec) == -1 ||
+diff --git a/misc/logsave.c b/misc/logsave.c
+index 8612edfb..cd6037dd 100644
+--- a/misc/logsave.c
++++ b/misc/logsave.c
+@@ -219,7 +219,7 @@ static int run_program(char **argv)
+ 			sprintf(buffer, "died with signal %d\n",
+ 				WTERMSIG(status));
+ 			send_output(buffer, 0, SEND_BOTH);
+-			rc = 1;
++			return 1;
+ 		}
+ 		rc = 0;
+ 	}
+-- 
+2.20.1
+

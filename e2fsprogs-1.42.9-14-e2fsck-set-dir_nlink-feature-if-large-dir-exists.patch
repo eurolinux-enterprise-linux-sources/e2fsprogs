@@ -1,0 +1,101 @@
+From 458939e5d9441448f87d3a6d45c84e041ee14786 Mon Sep 17 00:00:00 2001
+From: Andreas Dilger <adilger@dilger.ca>
+Date: Fri, 22 Jun 2018 18:08:54 -0400
+Subject: [PATCH 2/2] e2fsck: set dir_nlink feature if large dir exists
+
+commit 1a8015773a9316ee90f713c275fb3a38731735e4
+
+If there is a directory with more than EXT2_LINK_MAX (65000)
+subdirectories, but the DIR_NLINK feature is not set in the
+superblock, the feature should be set before continuing on
+to change the on-disk directory link count to 1.
+
+While most filesystems should have DIR_NLINK set (it was set
+by default for all ext4 filesystems, and all kernels between
+2.6.23 and 4.12 automatically set it if the directory link
+count grew too large), it is possible that this flag is lost
+due to disk corruption or for an upgraded filesystem.  We no
+longer want kernels to automatically enable features.
+
+Addresses: https://bugzilla.kernel.org/show_bug.cgi?id=196405
+Signed-off-by: Andreas Dilger <adilger@dilger.ca>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ e2fsck/pass4.c   | 14 +++++++++++++-
+ e2fsck/problem.c |  5 +++++
+ e2fsck/problem.h |  3 +++
+ 3 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/e2fsck/pass4.c b/e2fsck/pass4.c
+index 21d93f0c..ad95227c 100644
+--- a/e2fsck/pass4.c
++++ b/e2fsck/pass4.c
+@@ -98,6 +98,7 @@ void e2fsck_pass4(e2fsck_t ctx)
+ #endif
+ 	struct problem_context	pctx;
+ 	__u16	link_count, link_counted;
++	int dir_nlink_fs;
+ 	char	*buf = 0;
+ 	dgrp_t	group, maxgroup;
+ 
+@@ -112,6 +113,9 @@ void e2fsck_pass4(e2fsck_t ctx)
+ 	if (!(ctx->options & E2F_OPT_PREEN))
+ 		fix_problem(ctx, PR_4_PASS_HEADER, &pctx);
+ 
++	dir_nlink_fs = EXT2_HAS_RO_COMPAT_FEATURE(fs->super,
++					EXT4_FEATURE_RO_COMPAT_DIR_NLINK);
++
+ 	group = 0;
+ 	maxgroup = fs->group_desc_count;
+ 	if (ctx->progress)
+@@ -158,8 +162,16 @@ void e2fsck_pass4(e2fsck_t ctx)
+ 					    &link_counted);
+ 		}
+ 		isdir = ext2fs_test_inode_bitmap2(ctx->inode_dir_map, i);
+-		if (isdir && (link_counted > EXT2_LINK_MAX))
++		if (isdir && (link_counted > EXT2_LINK_MAX)) {
++			if (!dir_nlink_fs &&
++			    fix_problem(ctx, PR_4_DIR_NLINK_FEATURE, &pctx)) {
++				fs->super->s_feature_ro_compat |=
++					EXT4_FEATURE_RO_COMPAT_DIR_NLINK;
++				ext2fs_mark_super_dirty(fs);
++				dir_nlink_fs = 1;
++			}
+ 			link_counted = 1;
++		}
+ 		if (link_counted != link_count) {
+ 			e2fsck_read_inode(ctx, i, inode, "pass4");
+ 			pctx.ino = i;
+diff --git a/e2fsck/problem.c b/e2fsck/problem.c
+index c3ba631b..0210ff8f 100644
+--- a/e2fsck/problem.c
++++ b/e2fsck/problem.c
+@@ -1576,6 +1576,11 @@ static struct e2fsck_problem problem_table[] = {
+ 	  "They @s the same!\n"),
+ 	  PROMPT_NONE, 0 },
+ 
++	/* directory exceeds max links, but no DIR_NLINK feature in superblock*/
++	{ PR_4_DIR_NLINK_FEATURE,
++	  N_("@d exceeds max links, but no DIR_NLINK feature in @S.\n"),
++	  PROMPT_FIX, 0 },
++
+ 	/* Pass 5 errors */
+ 
+ 	/* Pass 5: Checking group summary information */
+diff --git a/e2fsck/problem.h b/e2fsck/problem.h
+index cf2df8ce..5712de59 100644
+--- a/e2fsck/problem.h
++++ b/e2fsck/problem.h
+@@ -1040,6 +1040,9 @@ struct problem_context {
+ /* Update quota information if it is inconsistent */
+ #define PR_6_UPDATE_QUOTAS		0x060002
+ 
++/* directory exceeds max links, but no DIR_NLINK feature in superblock */
++#define PR_4_DIR_NLINK_FEATURE		0x040006
++
+ /*
+  * Function declarations
+  */
+-- 
+2.20.1
+

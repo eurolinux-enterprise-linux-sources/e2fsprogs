@@ -1,7 +1,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.42.9
-Release: 13%{?dist}
+Release: 16%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -40,6 +40,25 @@ Patch27: e2fsprogs-1.42.11-Fix-32-64-bit-overflow-when-multiplying-by-blocks-cl.
 Patch28: e2fsprogs-1.44.1-e2fsck-warn-if-checkinterval-and-broken_system_clock.patch
 Patch29: e2fsprogs-1.42.9-libext2fs-detect-correct-superblock-adjustments-when.patch
 Patch30: e2fsprogs-1.42.9-libext2fs-don-t-always-read-backup-group-descriptors.patch
+Patch31: e2fsprogs-1.42.9-14-e2fsprogs-introduce-ext2fs_close_free-helper.patch
+Patch32: e2fsprogs-1.42.9-14-libext2fs-fix-maximum-bg-overhead-calculation-with-m.patch
+Patch33: e2fsprogs-1.42.9-14-libext2fs-automatically-enable-meta_bg-to-avoid-fill.patch
+Patch34: e2fsprogs-1.42.9-14-libext2fs-don-t-create-filesystems-with-meta_bg-and-.patch
+Patch35: e2fsprogs-1.42.9-14-libext2fs-fix-ext2fs_open2-error-for-meta_bg-image-f.patch
+Patch36: e2fsprogs-1.42.9-14-e2fsck-remove-resize-inode-if-both-resize_inode-and-.patch
+Patch37: e2fsprogs-1.42.9-14-resize2fs-Remove-the-real-kilobytes-rant-from-man-pa.patch
+Patch38: e2fsprogs-1.42.9-14-filefrag-don-t-ignore-fsync-errors.patch
+Patch39: e2fsprogs-1.42.9-14-mke2fs-Avoid-crashes-infinite-loops-for-absurdly-lar.patch
+Patch40: e2fsprogs-1.42.9-14-e2fsck-fix-fd-leak-in-reserve_stdio_fds.patch
+Patch41: e2fsprogs-1.42.9-14-e2fsck-fix-potential-Floating-Point-Exception-in-sho.patch
+Patch42: e2fsprogs-1.42.9-14-misc-fix-Coverity-bugs.patch
+Patch43: e2fsprogs-1.42.9-14-e2fsck-fix-free-pointer-dereferences.patch
+Patch44: e2fsprogs-1.42.9-14-e2fsck-fix-off-by-one-bounds-check-on-group-number.patch
+Patch45: e2fsprogs-1.42.9-14-e2fsck-fix-last-mount-time-and-last-write-time-in-pr.patch
+Patch46: e2fsprogs-1.42.9-14-e2fsck-if-any-problems-are-fixed-in-pass-0-check-the.patch
+Patch47: e2fsprogs-1.42.9-14-Clarify-how-the-description-of-the-dir_nlink-feature.patch
+Patch48: e2fsprogs-1.42.9-14-e2fsck-set-dir_nlink-feature-if-large-dir-exists.patch
+Patch49: e2fsprogs-1.42.11-e2fsck-free-ctx-fs-not-fs-at-the-end-of-fsck.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -219,6 +238,25 @@ It was originally inspired by the Multics SubSystem library.
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
+%patch31 -p1
+%patch32 -p1
+%patch33 -p1
+%patch34 -p1
+%patch35 -p1
+%patch36 -p1
+%patch37 -p1
+%patch38 -p1
+%patch39 -p1
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
+%patch44 -p1
+%patch45 -p1
+%patch46 -p1
+%patch47 -p1
+%patch48 -p1
+%patch49 -p1
 
 %build
 %configure --enable-elf-shlibs --enable-nls --disable-uuidd --disable-fsck \
@@ -411,6 +449,17 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Mon Jun 17 2019 Lukas Czerner <lczerner@redhat.com> 1.42.9-16
+- Fix NULL pointer dereference when releasing memory (#1720903)
+
+* Wed Feb 27 2019 Lukas Czerner <lczerner@redhat.com> 1.42.9-15
+- set dir_nlink feature if large dir exists (#1683694)
+
+* Mon Feb 25 2019 Lukas Czerner <lczerner@redhat.com> 1.42.9-14
+- Various fixes and improvements (#1682935)
+- Automatically enable meta_bg to avoid failure when creating huge fs with small bs (#1608635)
+- don't ignore fsync errors in filefrag (#1451185)
+
 * Tue Jun 13 2018 Lukas Czerner <lczerner@redhat.com> 1.42.9-13
 - e2fsck: warn if checkinterval and broken_system_clock both set (#1365594)
 - e2fsprogs: fail to open 1k block size ext4 with bigalloc,meta_bg,^resize_inode (#1448019)

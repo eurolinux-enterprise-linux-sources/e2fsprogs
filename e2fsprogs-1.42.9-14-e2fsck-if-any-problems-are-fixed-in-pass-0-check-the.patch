@@ -1,0 +1,64 @@
+From 775ecc1dd6624fe9bb4c4769cbd4d2cf7f49ca64 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Sat, 26 Apr 2014 23:14:47 -0400
+Subject: [PATCH 16/16] e2fsck: if any problems are fixed in pass 0, check the
+ whole file system
+
+commit 7664c7538a11ca03d569008e6c999d525b6ea8ed
+
+If there are any PREEN_OK problems fixed in check_super_block(), don't
+skip checking the full file system.
+
+Signed-off-by: "Theodore Ts'o" <tytso@mit.edu>
+---
+ e2fsck/e2fsck.h  | 3 ++-
+ e2fsck/problem.c | 3 +++
+ e2fsck/unix.c    | 3 +++
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/e2fsck/e2fsck.h b/e2fsck/e2fsck.h
+index 913a596a..8fc99932 100644
+--- a/e2fsck/e2fsck.h
++++ b/e2fsck/e2fsck.h
+@@ -189,8 +189,9 @@ struct resource_track {
+ #define E2F_FLAG_GOT_DEVSIZE	0x0800 /* Device size has been fetched */
+ #define E2F_FLAG_EXITING	0x1000 /* E2fsck exiting due to errors */
+ #define E2F_FLAG_TIME_INSANE	0x2000 /* Time is insane */
++#define E2F_FLAG_PROBLEMS_FIXED	0x4000 /* At least one problem was fixed */
+ 
+-#define E2F_RESET_FLAGS (E2F_FLAG_TIME_INSANE)
++#define E2F_RESET_FLAGS (E2F_FLAG_TIME_INSANE | E2F_FLAG_PROBLEMS_FIXED)
+ 
+ /*
+  * Defines for indicating the e2fsck pass number
+diff --git a/e2fsck/problem.c b/e2fsck/problem.c
+index 1aac7851..c3ba631b 100644
+--- a/e2fsck/problem.c
++++ b/e2fsck/problem.c
+@@ -1976,6 +1976,9 @@ int fix_problem(e2fsck_t ctx, problem_t code, struct problem_context *pctx)
+ 	if (ptr->flags & PR_AFTER_CODE)
+ 		answer = fix_problem(ctx, ptr->second_code, pctx);
+ 
++	if (answer && (ptr->prompt != PROMPT_NONE))
++		ctx->flags |= E2F_FLAG_PROBLEMS_FIXED;
++
+ 	return answer;
+ }
+ 
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index bbf65d90..813fb8c5 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -339,6 +339,9 @@ static void check_if_skip(e2fsck_t ctx)
+ 	int broken_system_clock;
+ 	time_t lastcheck;
+ 
++	if (ctx->flags & E2F_FLAG_PROBLEMS_FIXED)
++		return;
++
+ 	profile_get_boolean(ctx->profile, "options", "broken_system_clock",
+ 			    0, 0, &broken_system_clock);
+ 	if (ctx->flags & E2F_FLAG_TIME_INSANE)
+-- 
+2.20.1
+

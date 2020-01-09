@@ -1,0 +1,39 @@
+From 2ab3543e3b3330317769adcbe4bdb2f3c0b855e9 Mon Sep 17 00:00:00 2001
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Date: Thu, 24 Jul 2014 22:19:27 -0400
+Subject: [PATCH 14/16] e2fsck: fix off-by-one bounds check on group number
+
+commit b4f724c8a90987d4785fd1accfe69c125567be39
+
+Since fs->group_desc_count is the number of block groups, the number
+of the last group is always one less than this count.  Fix the bounds
+check to reflect that.
+
+This flaw shouldn't have any user-visible side effects, since the
+block bitmap test based on last_grp later on can handle overbig block
+numbers.
+
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ e2fsck/pass1.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/e2fsck/pass1.c b/e2fsck/pass1.c
+index 71b3000a..b58a0ca7 100644
+--- a/e2fsck/pass1.c
++++ b/e2fsck/pass1.c
+@@ -2599,8 +2599,8 @@ static void new_table_block(e2fsck_t ctx, blk64_t first_block, dgrp_t group,
+ 		first_block = ext2fs_group_first_block2(fs,
+ 							flexbg_size * flexbg);
+ 		last_grp = group | (flexbg_size - 1);
+-		if (last_grp > fs->group_desc_count)
+-			last_grp = fs->group_desc_count;
++		if (last_grp >= fs->group_desc_count)
++			last_grp = fs->group_desc_count - 1;
+ 		last_block = ext2fs_group_last_block2(fs, last_grp);
+ 	} else
+ 		last_block = ext2fs_group_last_block2(fs, group);
+-- 
+2.20.1
+

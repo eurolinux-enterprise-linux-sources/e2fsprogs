@@ -1,0 +1,66 @@
+From 63eafe15eb224f1130d7e359db088fd620187ba6 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Tue, 12 Dec 2017 21:46:36 -0500
+Subject: [PATCH 11/16] e2fsck: fix potential Floating Point Exception in
+ show_stats()
+
+commit 53600d306dbb0eb901a04d76a4a97f45777d39c8
+
+If the free inodes count in the superblock is equal to the inodes
+count in the superblock (which is not possible with a valid file
+system and will be fixed by e2fsck unless it is prevented by, for
+example, e2fsck -n), it is possible for e2fsck to crash due to a
+divide by zero error.
+
+Fix this potential bug.
+
+Addresses-Debian-Bug: #879220
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ e2fsck/unix.c | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index a434f1e6..84b9a454 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -103,7 +103,7 @@ static void show_stats(e2fsck_t	ctx)
+ 	unsigned int dir_links;
+ 	unsigned int num_files, num_links;
+ 	__u32 *mask, m;
+-	int frag_percent_file, frag_percent_dir, frag_percent_total;
++	int frag_percent_file = 0, frag_percent_dir = 0, frag_percent_total = 0;
+ 	int i, j, printed = 0;
+ 
+ 	dir_links = 2 * ctx->fs_directory_count - 1;
+@@ -116,16 +116,18 @@ static void show_stats(e2fsck_t	ctx)
+ 	blocks_used = (ext2fs_blocks_count(fs->super) -
+ 		       ext2fs_free_blocks_count(fs->super));
+ 
+-	frag_percent_file = (10000 * ctx->fs_fragmented) / inodes_used;
+-	frag_percent_file = (frag_percent_file + 5) / 10;
++	if (inodes_used > 0) {
++		frag_percent_file = (10000 * ctx->fs_fragmented) / inodes_used;
++		frag_percent_file = (frag_percent_file + 5) / 10;
+ 
+-	frag_percent_dir = (10000 * ctx->fs_fragmented_dir) / inodes_used;
+-	frag_percent_dir = (frag_percent_dir + 5) / 10;
++		frag_percent_dir = (10000 * ctx->fs_fragmented_dir) / inodes_used;
++		frag_percent_dir = (frag_percent_dir + 5) / 10;
+ 
+-	frag_percent_total = ((10000 * (ctx->fs_fragmented +
+-					ctx->fs_fragmented_dir))
+-			      / inodes_used);
+-	frag_percent_total = (frag_percent_total + 5) / 10;
++		frag_percent_total = ((10000 * (ctx->fs_fragmented +
++						ctx->fs_fragmented_dir))
++				      / inodes_used);
++		frag_percent_total = (frag_percent_total + 5) / 10;
++	}
+ 
+ 	if (!verbose) {
+ 		log_out(ctx, _("%s: %u/%u files (%0d.%d%% non-contiguous), "
+-- 
+2.20.1
+

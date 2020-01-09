@@ -1,0 +1,51 @@
+From 6efb6613deeca55b8e5673c77644890e7f5e4738 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Wed, 8 Oct 2014 11:18:41 -0400
+Subject: [PATCH 13/16] e2fsck: fix free pointer dereferences
+
+commit ebdf895b43a1ce499e4d2556a201e2a753fc422f
+
+Commit 47fee2ef6a23a introduces some free pointer dereference bugs by
+not clearing ctx->fs after calling ext2fs_close_free().
+
+Reported-by: Matthias Andree <mandree@FreeBSD.org>
+Cc: Lukas Czerner <lczerner@redhat.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ e2fsck/unix.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index 84b9a454..bbf65d90 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -458,7 +458,7 @@ static void check_if_skip(e2fsck_t ctx)
+ 	}
+ 	log_out(ctx, "\n");
+ skip:
+-	ext2fs_close_free(&fs);
++	ext2fs_close_free(&ctx->fs);
+ 	e2fsck_free_context(ctx);
+ 	exit(FSCK_OK);
+ }
+@@ -1461,7 +1461,7 @@ failure:
+ 		/*
+ 		 * Restart in order to reopen fs but this time start mmp.
+ 		 */
+-		ext2fs_close_free(&fs);
++		ext2fs_close_free(&ctx->fs);
+ 		flags &= ~EXT2_FLAG_SKIP_MMP;
+ 		goto restart;
+ 	}
+@@ -1690,7 +1690,7 @@ no_journal:
+ 				_("while resetting context"));
+ 			fatal_error(ctx, 0);
+ 		}
+-		ext2fs_close_free(&fs);
++		ext2fs_close_free(&ctx->fs);
+ 		goto restart;
+ 	}
+ 	if (run_result & E2F_FLAG_CANCEL) {
+-- 
+2.20.1
+

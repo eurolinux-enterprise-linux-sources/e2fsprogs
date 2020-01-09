@@ -1,0 +1,32 @@
+From a2a3247ba03bcb37f80b04b473112079968b9513 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Sat, 11 Aug 2018 20:47:08 -0400
+Subject: [PATCH 10/16] e2fsck: fix fd leak in reserve_stdio_fds
+
+commit ac5936d78d520b9edac15994728bb8b0364814e6
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+Reviewed-by: Lukas Czerner <lczerner@redhat.com>
+---
+ e2fsck/unix.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/e2fsck/unix.c b/e2fsck/unix.c
+index 5fcc9d99..a434f1e6 100644
+--- a/e2fsck/unix.c
++++ b/e2fsck/unix.c
+@@ -604,9 +604,10 @@ static void reserve_stdio_fds(void)
+ 			fprintf(stderr, _("ERROR: Couldn't open "
+ 				"/dev/null (%s)\n"),
+ 				strerror(errno));
+-			break;
++			return;
+ 		}
+ 	}
++	(void) close(fd);
+ }
+ 
+ #ifdef HAVE_SIGNAL_H
+-- 
+2.20.1
+

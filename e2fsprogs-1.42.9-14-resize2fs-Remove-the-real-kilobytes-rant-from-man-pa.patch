@@ -1,0 +1,53 @@
+From e8e0b3e9e8318064e38e4be108bc625f9258fb45 Mon Sep 17 00:00:00 2001
+From: Lukas Czerner <lczerner@redhat.com>
+Date: Thu, 19 Jul 2018 10:39:38 +0200
+Subject: [PATCH 07/16] resize2fs: Remove the real kilobytes rant from man page
+
+commit 94f20cd51522dd718bc4a459ea65d72a722d1874
+
+Remove the rant about the "real" kilobytes from the man page and just
+make it more clear that the suffixed units are representing power-of-two
+units as we do in mke2fs man page. Also add terabytes to the list.
+
+Signed-off-by: Lukas Czerner <lczerner@redhat.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ resize/resize2fs.8.in | 16 ++++------------
+ 1 file changed, 4 insertions(+), 12 deletions(-)
+
+diff --git a/resize/resize2fs.8.in b/resize/resize2fs.8.in
+index a1f3099b..78cb1212 100644
+--- a/resize/resize2fs.8.in
++++ b/resize/resize2fs.8.in
+@@ -41,24 +41,16 @@ If no units are specified, the units of the
+ parameter shall be the filesystem blocksize of the filesystem.
+ Optionally, the
+ .I size
+-parameter may be suffixed by one of the following the units
+-designators: 's', 'K', 'M', or 'G',
+-for 512 byte sectors, kilobytes, megabytes, or gigabytes, respectively.
+-The
++parameter may be suffixed by one of the following units
++designators: 'K', 'M', 'G', 'T' (either upper-case or lower-case) or 's'
++for power-of-two kilobytes, megabytes, gigabytes, terabytes or 512 byte
++sectors respectively. The
+ .I size
+ of the filesystem may never be larger than the size of the partition.
+ If
+ .I size
+ parameter is not specified, it will default to the size of the partition.
+ .PP
+-Note: when kilobytes is used above, I mean
+-.IR real ,
+-power-of-2 kilobytes, (i.e., 1024 bytes), which some politically correct
+-folks insist should be the stupid-sounding ``kibibytes''.  The same
+-holds true for megabytes, also sometimes known as ``mebibytes'', or
+-gigabytes, as the amazingly silly ``gibibytes''.  Makes you want to
+-gibber, doesn't it?
+-.PP
+ The
+ .B resize2fs
+ program does not manipulate the size of partitions.  If you wish to enlarge
+-- 
+2.20.1
+
