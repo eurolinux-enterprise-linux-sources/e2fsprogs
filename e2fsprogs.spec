@@ -4,7 +4,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.41.12
-Release: 23%{?dist}
+Release: 24%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -73,6 +73,8 @@ Patch51: e2fsprogs-1.42.13-time-fudged-ignore.patch
 Patch52: e2fsprogs-1.42.9-check_if_mounted-return.patch
 Patch53: e2fsprogs-1.42.12-e2fsck-impossible-dirblocks.patch
 Patch54: e2fsprogs-1.42.8-resize-flex_bg-no-resize_inode.patch
+Patch55: e2fsprogs-1.42.7-resize2fs-create-optimized-flex_bg-block-groups.patch
+Patch56: e2fsprogs-1.43.7-libext2fs-skip-start_blk-adjustment-when-stride-and-.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -282,6 +284,8 @@ It was originally inspired by the Multics SubSystem library.
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
+%patch55 -p1
+%patch56 -p1
 
 # Copy images needed for i_e2image in place
 cp -f %{SOURCE2} %{SOURCE3} %{SOURCE4} ./tests/i_e2image
@@ -453,6 +457,10 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Fri Feb 14 2018 Lukas Czerner <lczerner@redhat.com> 1.41.12-24
+- libext2fs: skip start_blk adjustment when stride and flex_bg is set (#1474179)
+- resize2fs: create optimized flex_bg block groups (#1474179)
+
 * Mon Aug 29 2016 Eric Sandeen <sandeen@redhat.com> 1.41.12-23
 - e2image: check return value from check_if_mounted() (#1139936)
 - e2fsck: do not process impossibly large dir blocks (#1297694)
