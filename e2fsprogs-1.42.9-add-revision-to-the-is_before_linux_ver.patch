@@ -1,0 +1,59 @@
+From b78d235914708decce36519e1a65705ba4f04cdb Mon Sep 17 00:00:00 2001
+From: Lukas Czerner <lczerner@redhat.com>
+Date: Mon, 24 Feb 2014 18:41:05 +0100
+Subject: [PATCH 2/8] mke2fs: Add revision to the is_before_linux_ver()
+
+Signed-off-by: Lukas Czerner <lczerner@redhat.com>
+---
+ misc/mke2fs.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/misc/mke2fs.c b/misc/mke2fs.c
+index 2afcb05..e970bbe 100644
+--- a/misc/mke2fs.c
++++ b/misc/mke2fs.c
+@@ -172,7 +172,8 @@ static int parse_version_number(const char *s)
+ 	return KERNEL_VERSION(major, minor, rev);
+ }
+ 
+-static int is_before_linux_ver(unsigned int major, unsigned int minor)
++static int is_before_linux_ver(unsigned int major, unsigned int minor,
++			       unsigned int rev)
+ {
+ 	struct		utsname ut;
+ 	static int	linux_version_code = -1;
+@@ -186,10 +187,11 @@ static int is_before_linux_ver(unsigned int major, unsigned int minor)
+ 	if (linux_version_code == 0)
+ 		return 0;
+ 
+-	return linux_version_code < KERNEL_VERSION(major, minor, 0);
++	return linux_version_code < KERNEL_VERSION(major, minor, rev);
+ }
+ #else
+-static int is_before_linux_ver(unsigned int major, unsigned int minor)
++static int is_before_linux_ver(unsigned int major, unsigned int minor,
++			       unsigned int rev)
+ {
+ 	return 0;
+ }
+@@ -1394,7 +1396,7 @@ profile_error:
+ 	memset(&fs_param, 0, sizeof(struct ext2_super_block));
+ 	fs_param.s_rev_level = 1;  /* Create revision 1 filesystems now */
+ 
+-	if (is_before_linux_ver(2, 2))
++	if (is_before_linux_ver(2, 2, 0))
+ 		fs_param.s_rev_level = 0;
+ 
+ 	if (argc && *argv) {
+@@ -1803,7 +1805,7 @@ profile_error:
+ 
+ 		if (use_bsize == -1) {
+ 			use_bsize = sys_page_size;
+-			if (is_before_linux_ver(2, 6) && use_bsize > 4096)
++			if (is_before_linux_ver(2, 6, 0) && use_bsize > 4096)
+ 				use_bsize = 4096;
+ 		}
+ 		if (lsector_size && use_bsize < lsector_size)
+-- 
+1.8.3.1
+

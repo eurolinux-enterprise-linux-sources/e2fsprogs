@@ -1,0 +1,37 @@
+commit 4b59352edb5ce783ba578d708de1fda981acfec6
+Author: Frank Sorenson <fsorenso@redhat.com>
+Date:   Fri Jul 4 15:31:50 2014 -0400
+
+    mke2fs: prevent creation of filesystem with unsupported revision
+    
+    It's a bit strange to accept revision levels higher than
+    the code creating the filesystem can understand, so don't
+    allow it.
+    
+    At least the kernel will mount the fs readonly if it's too
+    high, but no other utility will touch it, so you can't
+    fix the error.
+    
+    Just reject anything > EXT2_MAX_SUPP_REV at mkfs time.
+    
+    Signed-off-by: Frank Sorenson <fsorenso@redhat.com>
+    [sandeen@redhat.com: Add more verbose commit log]
+    Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+    Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+
+Index: e2fsprogs-1.42.9/misc/mke2fs.c
+===================================================================
+--- e2fsprogs-1.42.9.orig/misc/mke2fs.c
++++ e2fsprogs-1.42.9/misc/mke2fs.c
+@@ -1570,6 +1570,11 @@ profile_error:
+ 					_("bad revision level - %s"), optarg);
+ 				exit(1);
+ 			}
++			if (r_opt > EXT2_MAX_SUPP_REV) {
++				com_err(program_name, EXT2_ET_REV_TOO_HIGH,
++					_("while trying to create revision %d"), r_opt);
++				exit(1);
++			}
+ 			fs_param.s_rev_level = r_opt;
+ 			break;
+ 		case 's':	/* deprecated */

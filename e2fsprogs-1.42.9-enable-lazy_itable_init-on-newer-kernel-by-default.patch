@@ -1,0 +1,45 @@
+From 165af99c57a686444167fcef56f9fae31d815887 Mon Sep 17 00:00:00 2001
+From: Lukas Czerner <lczerner@redhat.com>
+Date: Mon, 24 Feb 2014 18:41:06 +0100
+Subject: [PATCH 4/8] mke2fs: Enable lazy_itable_init on newer kernel by
+ default
+
+Currently is used did not specified lazy_itable_init option we rely on
+information from ext4 module exported via sysfs interface. However if
+the ext4 module is not loaded it will not be enabled even though kernel
+might support it.
+
+With this commit we set the default according to the kernel version,
+however we still allow it to be set manually via extended option or be
+enabled in case that ext4 module advertise that it supports this
+feature.
+
+Signed-off-by: Lukas Czerner <lczerner@redhat.com>
+---
+ misc/mke2fs.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/misc/mke2fs.c b/misc/mke2fs.c
+index 76ea60b..23a988e 100644
+--- a/misc/mke2fs.c
++++ b/misc/mke2fs.c
+@@ -1998,7 +1998,15 @@ profile_error:
+ 			blocksize, sys_page_size);
+ 	}
+ 
+-	lazy_itable_init = 0;
++	/*
++	 * On newer kernels we do have lazy_itable_init support. So pick the
++	 * right default in case ext4 module is not loaded.
++	 */
++	if (is_before_linux_ver(2, 6, 37))
++		lazy_itable_init = 0;
++	else
++		lazy_itable_init = 1;
++
+ 	if (access("/sys/fs/ext4/features/lazy_itable_init", R_OK) == 0)
+ 		lazy_itable_init = 1;
+ 
+-- 
+1.8.3.1
+

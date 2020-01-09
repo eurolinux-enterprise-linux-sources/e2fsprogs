@@ -1,0 +1,31 @@
+From 6883c622c9971fb8f9fb6d5a8839fc2b0199d918 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Thu, 10 Jul 2014 00:47:40 -0400
+Subject: [PATCH] Fix nroff macro issue in chattr man page
+
+The single quote character must not be in the first character in a
+line, or else it can get mistaken as a macro call.
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ misc/chattr.1.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/misc/chattr.1.in b/misc/chattr.1.in
+index 23b6938..75b3ed8 100644
+--- a/misc/chattr.1.in
++++ b/misc/chattr.1.in
+@@ -22,8 +22,8 @@ changes the file attributes on a Linux file system.
+ The format of a symbolic mode is +-=[aAcCdDeijsStTu].
+ .PP
+ The operator '+' causes the selected attributes to be added to the
+-existing attributes of the files; '-' causes them to be removed; and
+-'=' causes them to be the only attributes that the files have.
++existing attributes of the files; '-' causes them to be removed; and '='
++causes them to be the only attributes that the files have.
+ .PP
+ The letters 'aAcCdDeijsStTu' select the new attributes for the files:
+ append only (a),
+-- 
+2.7.4
+

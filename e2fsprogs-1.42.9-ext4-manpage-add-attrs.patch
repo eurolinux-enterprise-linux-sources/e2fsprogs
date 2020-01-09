@@ -1,0 +1,67 @@
+commit e92beaac1017b5cc6a73ddb88aeab7b33f714e8b
+Author: Eric Sandeen <sandeen@redhat.com>
+Date:   Mon Aug 25 21:02:18 2014 -0400
+
+    e2fsprogs: add supported file attributes to ext4.5 manpage
+    
+    The chattr(1) manpage now refers users to filesystem-specific
+    manpages for details on supported attributes, so add those to
+    ext4.5.
+    
+    I've left out oddities like being able to set the compressed
+    or no-tail-packing flags, or setting data journaling on ext2.
+    
+    That behavior seems like a bug, not a feature.
+    
+    Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+    Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+
+diff --git a/misc/ext4.5.in b/misc/ext4.5.in
+index 9112b3d..a862a34 100644
+--- a/misc/ext4.5.in
++++ b/misc/ext4.5.in
+@@ -608,6 +608,37 @@ seriously cramp the system's style.)
+ .B i_version
+ Enable 64-bit inode version support. This option is off by default.
+ 
++.SH FILE ATTRIBUTES
++The ext2, ext3, and ext4 filesystems support setting the following file
++attributes on Linux systems using the
++.BR chattr (1)
++utility:
++.sp
++.BR a " - append only"
++.sp
++.BR A " - no atime updates"
++.sp
++.BR d " - no dump"
++.sp
++.BR D " - synchronous directory updates"
++.sp
++.BR i " - immutable"
++.sp
++.BR S " - synchronous updates"
++.sp
++.BR u " - undeletable"
++.sp
++In addition, the ext3 and ext4 filesystems support the following flag:
++.sp
++.BR j " - data journaling"
++.sp
++Finally, the ext4 filesystem also supports the following flag:
++.sp
++.BR e " - extents format"
++.sp
++For descriptions of these attribute flags, please refer to the
++.BR chattr (1)
++man page.
+ .SH SEE ALSO
+ .BR mke2fs (8),
+ .BR mke2fs.conf (5),
+@@ -615,4 +646,5 @@ Enable 64-bit inode version support. This option is off by default.
+ .BR dumpe2fs (8),
+ .BR tune2fs (8),
+ .BR debugfs (8),
+-.BR mount (8)
++.BR mount (8),
++.BR chattr (1)

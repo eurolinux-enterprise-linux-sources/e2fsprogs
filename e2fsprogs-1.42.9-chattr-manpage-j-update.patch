@@ -1,0 +1,38 @@
+commit c7c3775443ecd01ade5500e09191c5c4e94c2b56
+Author: Zheng Liu <wenqing.lz@taobao.com>
+Date:   Wed Feb 12 12:28:29 2014 -0500
+
+    chattr: improve the description for 'j' option in manpage
+    
+    Ext4 file system also supports to set/clear 'j' attribute, but it just
+    say that this option is only useful for ext3 in manpage.  This commit
+    fixes it.
+    
+    Signed-off-by: Zheng Liu <wenqing.lz@taobao.com>
+    Signed-off-by: "Theodore Ts'o" <tytso@mit.edu>
+    Reviewed-by: Carlos Maiolino <cmaiolino@redhat.com>
+
+diff --git a/misc/chattr.1.in b/misc/chattr.1.in
+index 932ef4b..2a3640c 100644
+--- a/misc/chattr.1.in
++++ b/misc/chattr.1.in
+@@ -112,8 +112,8 @@ to the file.  Only the superuser or a process possessing the
+ CAP_LINUX_IMMUTABLE capability can set or clear this attribute.
+ .PP
+ A file with the `j' attribute has all of its data written to the ext3
+-journal before being written to the file itself, if the filesystem is
+-mounted with the "data=ordered" or "data=writeback" options.  When the
++or ext4 journal before being written to the file itself, if the filesystem
++is mounted with the "data=ordered" or "data=writeback" options.  When the
+ filesystem is mounted with the "data=journal" option all file data
+ is already journalled and this attribute has no effect.  Only
+ the superuser or a process possessing the CAP_SYS_RESOURCE
+@@ -171,7 +171,7 @@ The `c', 's',  and `u' attributes are not honored
+ by the ext2, ext3, and ext4 filesystems as implemented in the current
+ mainline Linux kernels.
+ .PP
+-The `j' option is only useful if the filesystem is mounted as ext3.
++The `j' option is only useful if the filesystem is mounted as ext3 or ext4.
+ .PP
+ The `D' option is only useful on Linux kernel 2.5.19 and later.
+ .SH AVAILABILITY

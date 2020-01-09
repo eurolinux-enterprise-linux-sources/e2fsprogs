@@ -1,0 +1,53 @@
+From ca35619b7209a50ee0fd1f2799cbe232277f39cc Mon Sep 17 00:00:00 2001
+From: Eryu Guan <guaneryu@gmail.com>
+Date: Thu, 4 Jul 2013 17:05:10 +0800
+Subject: [PATCH 3/8] mke2fs: disable resize_inode feature if 64bit feature is
+ enabled
+
+Since auto_64-bit_support is on by default, resize_inode feature will
+be disabled when creating a >16T ext4 according to mke2fs.conf(5).
+
+This should also be done when making ext4 with "-O 64bit" to enable
+64bit feature explicitly. Otherwise online resize to enlarge a
+over-16T fs to larger would fail.
+
+[root@localhost resize]# truncate -s 50t fs.img
+[root@localhost resize]# losetup /dev/loop0 fs.img
+[root@localhost resize]# mkfs -t ext4 -O 64bit /dev/loop0 30t
+[root@localhost resize]# mount /dev/loop0 mnt
+[root@localhost resize]# resize2fs /dev/loop0
+resize2fs 1.42.7 (21-Jan-2013)
+Filesystem at /dev/loop0 is mounted on /root/resize/mnt; on-line resizing required
+old_desc_blocks = 3840, new_desc_blocks = 6400
+resize2fs: Invalid argument While checking for on-line resizing support
+
+And dmesg shows
+[688378.442623] EXT4-fs (loop0): resizing filesystem from 6710886400 to 13421772800 blocks
+[688378.443216] EXT4-fs warning (device loop0): verify_reserved_gdb:700: reserved GDT 3201 missing grp 177147 (5804756097)
+[688378.443222] EXT4-fs (loop0): resized filesystem to 8858370048
+[688378.528451] EXT4-fs warning (device loop0): ext4_group_extend:1710: can't shrink FS - resize aborted
+
+With this fix resize2fs could do the online enlarge correctly.
+
+Signed-off-by: Eryu Guan <guaneryu@gmail.com>
+---
+ misc/mke2fs.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/misc/mke2fs.c b/misc/mke2fs.c
+index e970bbe..76ea60b 100644
+--- a/misc/mke2fs.c
++++ b/misc/mke2fs.c
+@@ -1836,6 +1836,9 @@ profile_error:
+ 	 * 32-bit vs 64-bit block number support.
+ 	 */
+ 	if ((fs_blocks_count > MAX_32_NUM) &&
++	    (fs_param.s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT))
++		fs_param.s_feature_compat &= ~EXT2_FEATURE_COMPAT_RESIZE_INODE;
++	if ((fs_blocks_count > MAX_32_NUM) &&
+ 	    !(fs_param.s_feature_incompat & EXT4_FEATURE_INCOMPAT_64BIT) &&
+ 	    get_bool_from_profile(fs_types, "auto_64-bit_support", 0)) {
+ 		fs_param.s_feature_incompat |= EXT4_FEATURE_INCOMPAT_64BIT;
+-- 
+1.8.3.1
+

@@ -1,0 +1,87 @@
+From 2ded6409b3a22e68c19236153f0456e1c079d0da Mon Sep 17 00:00:00 2001
+From: Eric Sandeen <sandeen@redhat.com>
+Date: Tue, 20 Dec 2016 09:23:29 -0600
+Subject: [PATCH] libext2fs: don't ignore fsync errors
+
+Today, if mke2fs experiences IO errors (say, on a thin device
+which filled up during mkfs), mke2fs is silent and returns
+success even though the filesystem was not properly created.
+
+Catch errors from the io_channel_flush() callchain to
+fix this up.  Fix formatting of the printed error as
+well:
+
+...
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:
+Warning, had trouble writing out superblocks.
+# echo $?
+5
+
+Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ lib/ext2fs/closefs.c | 10 ++++++++--
+ lib/ext2fs/unix_io.c |  3 ++-
+ misc/mke2fs.c        |  2 +-
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/lib/ext2fs/closefs.c b/lib/ext2fs/closefs.c
+index a73c53f..000ebd8 100644
+--- a/lib/ext2fs/closefs.c
++++ b/lib/ext2fs/closefs.c
+@@ -410,16 +410,22 @@ write_primary_superblock_only:
+ 	ext2fs_swap_super(super_shadow);
+ #endif
+ 
+-	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC))
++	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC)) {
+ 		retval = io_channel_flush(fs->io);
++		if (retval)
++			goto errout;
++	}
+ 	retval = write_primary_superblock(fs, super_shadow);
+ 	if (retval)
+ 		goto errout;
+ 
+ 	fs->flags &= ~EXT2_FLAG_DIRTY;
+ 
+-	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC))
++	if (!(flags & EXT2_FLAG_FLUSH_NO_SYNC)) {
+ 		retval = io_channel_flush(fs->io);
++		if (retval)
++			goto errout;
++	}
+ errout:
+ 	fs->super->s_state = fs_state;
+ #ifdef WORDS_BIGENDIAN
+diff --git a/lib/ext2fs/unix_io.c b/lib/ext2fs/unix_io.c
+index 19be630..a2069f0 100644
+--- a/lib/ext2fs/unix_io.c
++++ b/lib/ext2fs/unix_io.c
+@@ -885,7 +885,8 @@ static errcode_t unix_flush(io_channel channel)
+ #ifndef NO_IO_CACHE
+ 	retval = flush_cached_blocks(channel, data, 0);
+ #endif
+-	fsync(data->dev);
++	if (!retval && fsync(data->dev) != 0)
++		return errno;
+ 	return retval;
+ }
+ 
+diff --git a/misc/mke2fs.c b/misc/mke2fs.c
+index 3e3ef95..8952a5f 100644
+--- a/misc/mke2fs.c
++++ b/misc/mke2fs.c
+@@ -2764,7 +2764,7 @@ no_journal:
+ 	retval = ext2fs_close(fs);
+ 	if (retval) {
+ 		fprintf(stderr, "%s",
+-			_("\nWarning, had trouble writing out superblocks."));
++			_("\nWarning, had trouble writing out superblocks.\n"));
+ 	} else if (!quiet) {
+ 		printf("%s", _("done\n\n"));
+ 		if (!getenv("MKE2FS_SKIP_CHECK_MSG"))
+-- 
+2.7.4
+

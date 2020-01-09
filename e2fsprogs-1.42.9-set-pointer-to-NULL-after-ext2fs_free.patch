@@ -1,0 +1,64 @@
+From 68ef8adcff3acc25ddac82b808c3036b4dddaf0b Mon Sep 17 00:00:00 2001
+From: Lukas Czerner <lczerner@redhat.com>
+Date: Thu, 20 Feb 2014 14:14:39 +0100
+Subject: [PATCH 8/8] e2fsprogs: Set pointer to NULL after ext2fs_free
+
+ext2fs_free() does not set the ext2_filsys pointer to null so the caller
+is responsible to setting it himself if it is needed.
+
+This patch fixes some places where caller did not set ext2_filsys
+pointer to NULL after ext2fs_free() which might result in use after
+free. Fix it.
+
+Signed-off-by: Lukas Czerner <lczerner@redhat.com>
+---
+ lib/ext2fs/openfs.c | 7 ++++---
+ resize/resize2fs.c  | 5 ++++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/lib/ext2fs/openfs.c b/lib/ext2fs/openfs.c
+index 4cdbde1..ef67493 100644
+--- a/lib/ext2fs/openfs.c
++++ b/lib/ext2fs/openfs.c
+@@ -419,10 +419,11 @@ errcode_t ext2fs_open2(const char *name, const char *io_options,
+ 
+ 	return 0;
+ cleanup:
+-	if (flags & EXT2_FLAG_NOFREE_ON_ERROR)
+-		*ret_fs = fs;
+-	else
++	if (!(flags & EXT2_FLAG_NOFREE_ON_ERROR)) {
+ 		ext2fs_free(fs);
++		fs = NULL;
++	}
++	*ret_fs = fs;
+ 	return retval;
+ }
+ 
+diff --git a/resize/resize2fs.c b/resize/resize2fs.c
+index 6b32bbf..a1fdefa 100644
+--- a/resize/resize2fs.c
++++ b/resize/resize2fs.c
+@@ -202,6 +202,7 @@ errcode_t resize_fs(ext2_filsys fs, blk64_t *new_size, int flags,
+ 	rfs->flags = flags;
+ 
+ 	ext2fs_free(rfs->old_fs);
++	rfs->old_fs = NULL;
+ 	if (rfs->itable_buf)
+ 		ext2fs_free_mem(&rfs->itable_buf);
+ 	if (rfs->reserve_blocks)
+@@ -213,8 +214,10 @@ errcode_t resize_fs(ext2_filsys fs, blk64_t *new_size, int flags,
+ 	return 0;
+ 
+ errout:
+-	if (rfs->new_fs)
++	if (rfs->new_fs) {
+ 		ext2fs_free(rfs->new_fs);
++		rfs->new_fs = NULL;
++	}
+ 	if (rfs->itable_buf)
+ 		ext2fs_free_mem(&rfs->itable_buf);
+ 	ext2fs_free_mem(&rfs);
+-- 
+1.8.3.1
+

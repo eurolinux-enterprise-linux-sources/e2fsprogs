@@ -1,0 +1,39 @@
+commit c7c539e8fd86de691475eea00409c6c030f312cd
+Author: Darrick J. Wong <darrick.wong@oracle.com>
+Date:   Tue Jul 22 12:40:56 2014 -0400
+
+    e4defrag: backwards-allocated files should be defragmented too
+    
+    Currently, e4defrag avoids increasing file fragmentation by comparing
+    the number of runs of physical extents of both the original and the
+    donor files.  Unfortunately, there is a bug in the routine that counts
+    physical extents, since it doesn't look at the logical block offsets
+    of the extents.  Therefore, a file whose blocks were allocated in
+    reverse order will be seen as only having one big physical extent, and
+    therefore will not be defragmented.
+    
+    Fix the counting routine to consider logical extent offset so that we
+    defragment backwards-allocated files.  This could be problematic if we
+    ever gain the ability to lay out logically sparse extents in a
+    physically contiguous manner, but presumably one wouldn't call defrag
+    on such a file.
+    
+    Reported-by: Xiaoguang Wang <wangxg.fnst@cn.fujitsu.com>
+    Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+    Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+
+Index: e2fsprogs-1.42.9/misc/e4defrag.c
+===================================================================
+--- e2fsprogs-1.42.9.orig/misc/e4defrag.c
++++ e2fsprogs-1.42.9/misc/e4defrag.c
+@@ -941,7 +941,9 @@ static int get_physical_count(struct fie
+ 
+ 	do {
+ 		if ((ext_list_tmp->data.physical + ext_list_tmp->data.len)
+-				!= ext_list_tmp->next->data.physical) {
++				!= ext_list_tmp->next->data.physical ||
++		    (ext_list_tmp->data.logical + ext_list_tmp->data.len)
++				!= ext_list_tmp->next->data.logical) {
+ 			/* This extent and next extent are not continuous. */
+ 			ret++;
+ 		}
