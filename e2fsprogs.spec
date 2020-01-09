@@ -4,7 +4,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.41.12
-Release: 22%{?dist}
+Release: 23%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -17,6 +17,7 @@ Source3: image2048.orig.bz2
 Source4: image4096.orig.bz2
 Source5: f_eofblocks_image.gz
 Source6: f_extent_interior_start_lblk_image.gz
+Source7: f_hugedir_blocks_image.gz
 
 Patch1: e2fsprogs-1.40.4-sb_feature_check_ignore.patch
 Patch2: e2fpsrogs-1.41.12-EOFBLOCKS-test.patch
@@ -69,6 +70,9 @@ Patch48: e2fsprogs-1.41.12-e2image-mounted.patch
 Patch49: e2fsprogs-1.41.14-rec_len-encoding.patch
 Patch50: e2fsprogs-1.42.11-time-preen.patch
 Patch51: e2fsprogs-1.42.13-time-fudged-ignore.patch
+Patch52: e2fsprogs-1.42.9-check_if_mounted-return.patch
+Patch53: e2fsprogs-1.42.12-e2fsck-impossible-dirblocks.patch
+Patch54: e2fsprogs-1.42.8-resize-flex_bg-no-resize_inode.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -275,12 +279,16 @@ It was originally inspired by the Multics SubSystem library.
 %patch49 -p1
 %patch50 -p1
 %patch51 -p1
+%patch52 -p1
+%patch53 -p1
+%patch54 -p1
 
 # Copy images needed for i_e2image in place
 cp -f %{SOURCE2} %{SOURCE3} %{SOURCE4} ./tests/i_e2image
 # Copy images needed for new tests in place
 cp -f %{SOURCE5} ./tests/f_eofblocks/image.gz
 cp -f %{SOURCE6} ./tests/f_extent_interior_start_lblk/image.gz
+cp -f %{SOURCE7} ./tests/f_hugedir_blocks/image.gz
 
 %build
 %configure --enable-elf-shlibs --enable-nls --disable-uuidd --disable-fsck \
@@ -445,6 +453,11 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Mon Aug 29 2016 Eric Sandeen <sandeen@redhat.com> 1.41.12-23
+- e2image: check return value from check_if_mounted() (#1139936)
+- e2fsck: do not process impossibly large dir blocks (#1297694)
+- resize2fs: fix off-line resize of file systems (#1285227)
+
 * Thu Jun 04 2015 Eric Sandeen <sandeen@redhat.com> 1.41.12-22
 - e2fsck: fix last mount time and last write time in preen mode (#1218262)
 - e2fsck: don't prompt for time fixes with accept_time_fudge (#1218262)
