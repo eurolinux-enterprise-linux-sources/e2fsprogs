@@ -1,7 +1,7 @@
 Summary: Utilities for managing ext2, ext3, and ext4 filesystems
 Name: e2fsprogs
 Version: 1.42.9
-Release: 10%{?dist}
+Release: 11%{?dist}
 
 # License tags based on COPYING file distinctions for various components
 License: GPLv2
@@ -34,6 +34,8 @@ Patch21: e2fsprogs-1.42.9-libext2fs-buffer-overflow-closefs.patch
 Patch22: e2fsprogs-1.42.9-resize2fs-clear-uninit-BG.patch
 Patch23: e2fsprogs-1.43.3-libext2fs-don-t-ignore-fsync-errors.patch
 Patch24: e2fsprogs-1.42.10-Fix-nroff-macro-issue-in-chattr-man-page.patch
+Patch25: e2fsprogs-1.43.6-libext2fs-skip-start_blk-adjustment-when-stride-and-.patch
+Patch26: e2fsprogs-1.43.4-tune2fs-edit-dire-warning-about-check-intervals.patch
 
 Url: http://e2fsprogs.sourceforge.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -207,6 +209,8 @@ It was originally inspired by the Multics SubSystem library.
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
+%patch25 -p1
+%patch26 -p1
 
 %build
 %configure --enable-elf-shlibs --enable-nls --disable-uuidd --disable-fsck \
@@ -394,6 +398,22 @@ exit 0
 %{_libdir}/pkgconfig/ss.pc
 
 %changelog
+* Thu Apr 10 2018 Scientific Linux Auto Patch Process <SCIENTIFIC-LINUX-DEVEL@LISTSERV.FNAL.GOV>
+- Eliminated rpmbuild "bogus date" error due to inconsistent weekday,
+  by assuming the date is correct and changing the weekday.
+  Tue Oct 15 2007 --> Tue Oct 09 2007 or Mon Oct 15 2007 or Tue Oct 16 2007 or ....
+  Tue Jan 09 2008 --> Tue Jan 08 2008 or Wed Jan 09 2008 or Tue Jan 15 2008 or ....
+  Mon Jan 10 2008 --> Mon Jan 07 2008 or Thu Jan 10 2008 or Mon Jan 14 2008 or ....
+  Mon Oct 03 2008 --> Mon Sep 29 2008 or Fri Oct 03 2008 or Mon Oct 06 2008 or ....
+  Fri Aug 05 2009 --> Fri Jul 31 2009 or Wed Aug 05 2009 or Fri Aug 07 2009 or ....
+  Thu Sep 14 2009 --> Thu Sep 10 2009 or Mon Sep 14 2009 or Thu Sep 17 2009 or ....
+  Mon Jul 13 2010 --> Mon Jul 12 2010 or Tue Jul 13 2010 or Mon Jul 19 2010 or ....
+  Thu Jan 01 2014 --> Thu Dec 26 2013 or Wed Jan 01 2014 or Thu Jan 02 2014 or ....
+
+* Tue Nov 14 2017 Lukas Czerner <lczerner@redhat.com> 1.42.9-11
+- libext2fs: skip start_blk adjustment when stride and flex_bg is set (#1503969)
+- tune2fs: edit dire warning about check intervals (#1433233)
+
 * Thu Mar 16 2017 Lukas Czerner <lczerner@redhat.com> 1.42.9-10
 - libext2fs: don't ignore fsync errors (#1405049)
 - Fix nroff macro issue in chattr man page (#1429213)
@@ -430,7 +450,8 @@ exit 0
 * Mon Jan 20 2014 Eric Sandeen <sandeen@redhat.com> 1.42.9-2
 - Fix Source0 URL
 
-* Thu Jan 01 2014 Eric Sandeen <sandeen@redhat.com> 1.42.9-1
+* Wed Jan 01 2014 Eric Sandeen <sandeen@redhat.com> 1.42.9-1
+  Thu Jan 01 2014 --> Thu Dec 26 2013 or Wed Jan 01 2014 or Thu Jan 02 2014 or ....
 - New upstream release (#1051588)
 - Re-enable disabled tests for now
 
@@ -546,7 +567,8 @@ exit 0
 * Wed Oct 06 2010 Eric Sandeen <sandeen@redhat.com> 1.41.12-6
 - Install e4defrag for testing
 
-* Mon Jul 13 2010 Eric Sandeen <sandeen@redhat.com> 1.41.12-5
+* Tue Jul 13 2010 Eric Sandeen <sandeen@redhat.com> 1.41.12-5
+  Mon Jul 13 2010 --> Mon Jul 12 2010 or Tue Jul 13 2010 or Mon Jul 19 2010 or ....
 - Relax fsck requirements for resize2fs -P
 
 * Mon Jul 12 2010 Eric Sandeen <sandeen@redhat.com> 1.41.12-4
@@ -604,7 +626,8 @@ exit 0
 * Tue Oct 06 2009 Eric Sandeen <sandeen@redhat.com> 1.41.9-4
 - Fix install with --excludedocs (#515987)
 
-* Thu Sep 14 2009 Eric Sandeen <sandeen@redhat.com> 1.41.9-3
+* Mon Sep 14 2009 Eric Sandeen <sandeen@redhat.com> 1.41.9-3
+  Thu Sep 14 2009 --> Thu Sep 10 2009 or Mon Sep 14 2009 or Thu Sep 17 2009 or ....
 - Drop defrag bits for now, not ready yet.
 
 * Thu Sep 10 2009 Josef Bacik <josef@toxicpanda.com> 1.41.9-2
@@ -613,7 +636,8 @@ exit 0
 * Sun Aug 23 2009 Eric Sandeen <sandeen@redhat.com> 1.41.9-1
 - New upstream release
 
-* Fri Aug 05 2009 Eric Sandeen <sandeen@redhat.com> 1.41.8-6
+* Wed Aug 05 2009 Eric Sandeen <sandeen@redhat.com> 1.41.8-6
+  Fri Aug 05 2009 --> Fri Jul 31 2009 or Wed Aug 05 2009 or Fri Aug 07 2009 or ....
 - Fix filefrag in fallback case
 - Add e2freefrag & e4defrag (experimental)
 
@@ -695,10 +719,12 @@ exit 0
 - Remove conservative "don't change journal location" patch for F11
 - Add btrfs recognition to blkid
 
-* Mon Oct 03 2008 Eric Sandeen <sandeen@redhat.com> 1.41.3-2
+* Fri Oct 03 2008 Eric Sandeen <sandeen@redhat.com> 1.41.3-2
+  Mon Oct 03 2008 --> Mon Sep 29 2008 or Fri Oct 03 2008 or Mon Oct 06 2008 or ....
 - Bump to revision 2, f10 was behind f9, oops.
 
-* Mon Oct 03 2008 Eric Sandeen <sandeen@redhat.com> 1.41.3-1
+* Fri Oct 03 2008 Eric Sandeen <sandeen@redhat.com> 1.41.3-1
+  Mon Oct 03 2008 --> Mon Sep 29 2008 or Fri Oct 03 2008 or Mon Oct 06 2008 or ....
 - New upstream version (very minor fixes, ext4-related)
 
 * Thu Oct 02 2008 Eric Sandeen <sandeen@redhat.com> 1.41.2-2
@@ -790,11 +816,13 @@ exit 0
 - Ignore some primary/backup superblock flag differences (#428893)
 - Teach libblkid about ext4dev.
 
-* Mon Jan 10 2008 Eric Sandeen <sandeen@redhat.com> 1.40.4-4
+* Thu Jan 10 2008 Eric Sandeen <sandeen@redhat.com> 1.40.4-4
+  Mon Jan 10 2008 --> Mon Jan 07 2008 or Thu Jan 10 2008 or Mon Jan 14 2008 or ....
 - Build e2fsck as a dynamically linked binary.
 - Re-fix uidd manpage default paths.
 
-* Tue Jan 09 2008 Eric Sandeen <sandeen@redhat.com> 1.40.4-3
+* Wed Jan 09 2008 Eric Sandeen <sandeen@redhat.com> 1.40.4-3
+  Tue Jan 09 2008 --> Tue Jan 08 2008 or Wed Jan 09 2008 or Tue Jan 15 2008 or ....
 - New uuidd subpackage, and properly set up uuidd at install.
 
 * Tue Jan 01 2008 Eric Sandeen <esandeen@redhat.com> 1.40.4-2
@@ -829,7 +857,8 @@ exit 0
 - Make (more) file timestamps match those in tarball for multilib tidiness 
 - Fix e2fsprogs-libs summary (shared libs not static)
 
-* Tue Oct 15 2007 Eric Sandeen <esandeen@redhat.com> 1.40.2-9
+* Mon Oct 15 2007 Eric Sandeen <esandeen@redhat.com> 1.40.2-9
+  Tue Oct 15 2007 --> Tue Oct 09 2007 or Mon Oct 15 2007 or Tue Oct 16 2007 or ....
 - Detect big-endian squashfs filesystems in libblkid (#305151)
 
 * Tue Oct 02 2007 Eric Sandeen <esandeen@redhat.com> 1.40.2-8
